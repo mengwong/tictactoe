@@ -43,7 +43,7 @@ def player(board, depth):
     print(stars(depth), "player = " + toreturn)
     return toreturn
 
-def actions(board):
+def actions(board, depth):
     """
     Returns set of all possible actions (i, j) available on the board.
     """
@@ -52,8 +52,7 @@ def actions(board):
         for j in range(len(board[i])):
             if board[i][j] == EMPTY:
                 result.add((i,j))
-    print("** actions = ", end="")
-    print(result)
+    print(stars(depth), f"actions = {result}")
     return result
 
 
@@ -63,6 +62,7 @@ def result(board, action, depth):
     """
     temp_board = copy.deepcopy(board)
     curr_player = player(board,depth)
+    print(stars(depth), "the current player is " + curr_player)
     i, j = action
     if temp_board[i][j] != EMPTY:
         raise Exception ('Not a valid move')
@@ -105,9 +105,9 @@ def terminal(board, depth):
         if row.count(EMPTY) != 0:
             e_count += 1
     if e_count != 0:
-        print(stars(depth), "Terminal: returning false")
+        print(stars(depth), "are we terminal? no")
         return False
-    print(stars(depth), "Terminal: returning true")
+    print(stars(depth), "are we terminal? yes")
     return True
 
 
@@ -130,16 +130,17 @@ def minimax(board, depth):
     """
     Returns the optimal action for the current player on the board.
     """
+    show("minimax: what is the minimax value of this board?", board, depth)
     if (terminal(board,depth)):
         print(stars(depth), "minimax: board is terminal; returning none.")
         return None
     else:
         if player(board,depth) == 'X':
             print(stars(depth), "minimax: player X, so returning min_value.")
-            return min_value(board, 1)
+            return min_value(board, depth+1)
         elif player(board,depth) == 'O':
             print(stars(depth), "minimax: player O, so returning max_value.")
-            return max_value(board, 1)
+            return max_value(board, depth+1)
 
 
 def max_value(board, depth):
@@ -149,7 +150,7 @@ def max_value(board, depth):
         print (stars(depth), "max_value: board is terminal. returning utility of the board, which is " + str(ub))
         return ub
     v = float("-inf")
-    possibilities = actions(board)
+    possibilities = actions(board, depth)
     print(stars(depth), "max_value: considering " + str(len(possibilities)) + " possibilities.")
     for places in possibilities:
         print(stars(depth+1), "max_value: considering possibility " + str(places))
@@ -164,7 +165,7 @@ def min_value(board, depth):
         print (stars(depth), "min_value: board is terminal. returning utility of the board, which is " + str(ub))
         return ub
     v = float("inf")
-    possibilities = actions(board)
+    possibilities = actions(board, depth)
     print(stars(depth+1), "min_value: considering " + str(len(possibilities)) + " possibilities.")
     for places in possibilities:
         print(stars(depth+1), "min_value: considering possibility " + str(places))
@@ -172,9 +173,10 @@ def min_value(board, depth):
     print (stars(depth), "min_value = " + str(v))
     return v
 
-test_board = [['X', 'O', 'O'], ['X', 'O', 'O'], ['X', 'X', EMPTY]]
-show("test board", test_board, 1)
-print(max_value(test_board, 2))
+test_board = [['X', 'O', 'O'],
+              ['X', 'O', EMPTY],
+              ['X', 'X', EMPTY]]
+print(minimax(test_board, 2))
 
 
 # get the min or max value from the respective functions, get the associated move and pass it on
