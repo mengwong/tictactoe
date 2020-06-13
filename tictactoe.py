@@ -37,11 +37,10 @@ def player(board, depth):
     count = {'X': 0, 'O': 0}
     for row in board:
         if row.count(None) < len(row):
-            print(stars(depth), "counting Xs and Os")
             count['O'] += row.count('O')
             count['X'] += row.count('X')
-    toreturn = min(count, key=count.get)
-    print(stars(depth), "player = " + toreturn)
+    toreturn = 'X' if count['X'] < count['O'] else 'O'
+    print("next move, player " + toreturn)
     return toreturn
 
 def actions(board, depth):
@@ -53,7 +52,7 @@ def actions(board, depth):
         for j in range(len(board[i])):
             if board[i][j] == EMPTY:
                 result.add((i,j))
-    print(stars(depth), f"actions = {result}")
+    print(f"actions = {result}")
     return result
 
 
@@ -63,13 +62,13 @@ def result(board, action, depth):
     """
     temp_board = copy.deepcopy(board)
     curr_player = player(board,depth)
-    print(stars(depth), "the current player is " + curr_player)
+    print("the current player is " + curr_player)
     i, j = action
     if temp_board[i][j] != EMPTY:
         raise Exception ('Not a valid move')
     else:
         temp_board[i][j] = curr_player
-    show("result", temp_board, depth)
+    show("result", temp_board, 0)
     return temp_board
 
 
@@ -106,9 +105,9 @@ def terminal(board, depth):
         if row.count(EMPTY) != 0:
             e_count += 1
     if e_count != 0:
-        print(stars(depth), "are we terminal? no")
+        print("are we terminal? no")
         return False
-    print(stars(depth), "are we terminal? yes")
+    print("are we terminal? yes")
     return True
 
 
@@ -116,14 +115,17 @@ def utility(board, depth):
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
-    show('Utility', board, depth)
+    show('Utility', board, 0)
     check_board = winner(board)
-    print(stars(depth), 'Winner = ' + check_board)
+    print(check_board)
     if check_board == 'X':
+        print(stars(depth), 'We have a Winner! X wins.')
         return 1
     elif check_board == 'O':
+        print(stars(depth), 'We have a Winner! X wins.')
         return -1
     else:
+        print(stars(depth), 'A curious game, Professor Falken. The only winning move is not to play.')
         return 0
 
 
@@ -137,11 +139,11 @@ def minimax(board, depth):
         return None
     else:
         if player(board,depth) == 'X':
-            print(stars(depth), "minimax: player X, so returning min_value.")
-            return min_value(board, depth+1)
-        elif player(board,depth) == 'O':
-            print(stars(depth), "minimax: player O, so returning max_value.")
+            print(stars(depth), "minimax: player X goes next, so returning max_value.")
             return max_value(board, depth+1)
+        elif player(board,depth) == 'O':
+            print(stars(depth), "minimax: player O goes next, so returning min_value.")
+            return min_value(board, depth+1)
 
 
 def max_value(board, depth):
@@ -152,11 +154,12 @@ def max_value(board, depth):
         return ub
     v = float("-inf")
     possibilities = actions(board, depth)
-    print(stars(depth), "max_value: considering " + str(len(possibilities)) + " possibilities.")
+    print("max_value: considering " + str(len(possibilities)) + " possibilities.")
+    p = player(board,depth)
     for places in possibilities:
-        print(stars(depth+1), "max_value: considering possibility " + str(places))
-        v = max(v, min_value(result(board, places, depth+2), depth+2))
-    print (stars(depth), "max_value = " + str(v))
+        print(stars(depth), f"max_value: what if {p} plays " + str(places) + "?")
+        v = max(v, min_value(result(board, places, depth+1), depth+1))
+        print(stars(depth), f"max_value:      if {p} plays " + str(places) + ", the max_value is " + str(v))
     return v
 
 def min_value(board, depth):
@@ -167,15 +170,16 @@ def min_value(board, depth):
         return ub
     v = float("inf")
     possibilities = actions(board, depth)
-    print(stars(depth+1), "min_value: considering " + str(len(possibilities)) + " possibilities.")
+    print("min_value: considering " + str(len(possibilities)) + " possibilities.")
+    p = player(board,depth)
     for places in possibilities:
-        print(stars(depth+1), "min_value: considering possibility " + str(places))
-        v = min(v, max_value(result(board, places, depth+2), depth+2))
-    print (stars(depth), "min_value = " + str(v))
+        print(stars(depth), f"min_value: what if {p} plays " + str(places) + "?")
+        v = min(v, max_value(result(board, places, depth+1), depth+1))
+        print(stars(depth), f"min_value:      if {p} plays " + str(places) + ", the min_value is " + str(v))
     return v
 
 test_board = [['X', 'O', 'O'],
-              ['X', 'O', EMPTY],
+              ['O', 'O', EMPTY],
               ['X', 'X', EMPTY]]
 print(minimax(test_board, 2))
 
