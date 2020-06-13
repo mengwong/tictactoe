@@ -10,6 +10,14 @@ X = "X"
 O = "O"
 EMPTY = None
 
+def stars(depth):
+    return "*"*depth
+
+def show(name, board, depth=0):
+    print(stars(depth), name + ":")
+    for row in board:
+        print(" "*(depth+1), end="")
+        print (row)
 
 def initial_state():
     """
@@ -20,7 +28,7 @@ def initial_state():
             [EMPTY, EMPTY, EMPTY]]
 
 
-def player(board):
+def player(board, depth):
     """
     Returns player who has the next turn on a board.
     """
@@ -31,7 +39,9 @@ def player(board):
         if row.count(None) < len(row):
             count['O'] += row.count('O')
             count['X'] += row.count('X')
-    return max(count, key=count.get)
+    toreturn = max(count, key=count.get)
+    print(stars(depth), "player = " + toreturn)
+    return toreturn
 
 def actions(board):
     """
@@ -42,20 +52,23 @@ def actions(board):
         for j in range(len(board[i])):
             if board[i][j] == EMPTY:
                 result.add((i,j))
+    print("** actions = ", end="")
+    print(result)
     return result
 
 
-def result(board, action):
+def result(board, action, depth):
     """
     Returns the board that results from making move (i, j) on the board.
     """
     temp_board = copy.deepcopy(board)
-    curr_player = player(board)
+    curr_player = player(board,depth)
     i, j = action
     if temp_board[i][j] != EMPTY:
         raise Exception ('Not a valid move')
     else:
         temp_board[i][j] = curr_player
+    show("result", temp_board, depth)
     return temp_board
 
 
@@ -82,27 +95,29 @@ def winner(board):
             return None
 
 
-def terminal(board):
+def terminal(board, depth):
     """
     Returns True if game is over, False otherwise.
     """
-    print('Terminal: ', board)
+#    show('Terminal', board)
     e_count = 0
     for row in board:
         if row.count(EMPTY) != 0:
             e_count += 1
     if e_count != 0:
+        print(stars(depth), "Terminal: returning false")
         return False
+    print(stars(depth), "Terminal: returning true")
     return True
 
 
-def utility(board):
+def utility(board, depth):
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
-    print('Utility: ', board)
+    show('Utility', board, depth)
     check_board = winner(board)
-    print('Utility: ', check_board)
+    print(stars(depth), 'Winner = ' + check_board)
     if check_board == 'X':
         return 1
     elif check_board == 'O':
@@ -111,39 +126,55 @@ def utility(board):
         return 0
 
 
-def minimax(board):
+def minimax(board, depth):
     """
     Returns the optimal action for the current player on the board.
     """
-    if (terminal(board)):
+    if (terminal(board,depth)):
+        print(stars(depth), "minimax: board is terminal; returning none.")
         return None
     else:
-        if player(board) == 'X':
-            return min_value(board)
-        elif player(board) == 'O':
-            return max_value(board)
+        if player(board,depth) == 'X':
+            print(stars(depth), "minimax: player X, so returning min_value.")
+            return min_value(board, 1)
+        elif player(board,depth) == 'O':
+            print(stars(depth), "minimax: player O, so returning max_value.")
+            return max_value(board, 1)
 
 
-def max_value(board):
-    if (terminal(board)):
-        return utility(board)
+def max_value(board, depth):
+    show ("max_value: what is the max value of this board?", board, depth)
+    if (terminal(board, depth)):
+        ub = utility(board, depth)
+        print (stars(depth), "max_value: board is terminal. returning utility of the board, which is " + str(ub))
+        return ub
     v = float("-inf")
     possibilities = actions(board)
+    print(stars(depth), "max_value: considering " + str(len(possibilities)) + " possibilities.")
     for places in possibilities:
-        v = max(v, min_value(result(board, places)))
+        print(stars(depth+1), "max_value: considering possibility " + str(places))
+        v = max(v, min_value(result(board, places, depth+1), depth+1))
+    print (stars(depth), "max_value = " + str(v))
     return v
 
-def min_value(board):
-    if (terminal(board)):
-        return utility(board)
+def min_value(board, depth):
+    show ("min_value: what is the max value of this board?", board, depth)
+    if (terminal(board,depth)):
+        ub = utility(board, depth)
+        print (stars(depth), "min_value: board is terminal. returning utility of the board, which is " + str(ub))
+        return ub
     v = float("inf")
     possibilities = actions(board)
+    print(stars(depth+1), "min_value: considering " + str(len(possibilities)) + " possibilities.")
     for places in possibilities:
-        v = min(v, max_value(result(board, places)))
+        print(stars(depth+1), "min_value: considering possibility " + str(places))
+        v = min(v, max_value(result(board, places, depth+1), depth+1))
+    print (stars(depth), "min_value = " + str(v))
     return v
 
 test_board = [['X', 'O', 'O'], ['X', 'O', 'O'], ['X', 'X', EMPTY]]
-print(max_value(test_board))
+show("test board", test_board, 1)
+print(max_value(test_board, 2))
 
 
 # get the min or max value from the respective functions, get the associated move and pass it on
