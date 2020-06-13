@@ -37,9 +37,10 @@ def player(board, depth):
     count = {'X': 0, 'O': 0}
     for row in board:
         if row.count(None) < len(row):
+            print(stars(depth), "counting Xs and Os")
             count['O'] += row.count('O')
             count['X'] += row.count('X')
-    toreturn = max(count, key=count.get)
+    toreturn = min(count, key=count.get)
     print(stars(depth), "player = " + toreturn)
     return toreturn
 
@@ -154,12 +155,12 @@ def max_value(board, depth):
     print(stars(depth), "max_value: considering " + str(len(possibilities)) + " possibilities.")
     for places in possibilities:
         print(stars(depth+1), "max_value: considering possibility " + str(places))
-        v = max(v, min_value(result(board, places, depth+1), depth+1))
+        v = max(v, min_value(result(board, places, depth+2), depth+2))
     print (stars(depth), "max_value = " + str(v))
     return v
 
 def min_value(board, depth):
-    show ("min_value: what is the max value of this board?", board, depth)
+    show ("min_value: what is the min value of this board?", board, depth)
     if (terminal(board,depth)):
         ub = utility(board, depth)
         print (stars(depth), "min_value: board is terminal. returning utility of the board, which is " + str(ub))
@@ -169,7 +170,7 @@ def min_value(board, depth):
     print(stars(depth+1), "min_value: considering " + str(len(possibilities)) + " possibilities.")
     for places in possibilities:
         print(stars(depth+1), "min_value: considering possibility " + str(places))
-        v = min(v, max_value(result(board, places, depth+1), depth+1))
+        v = min(v, max_value(result(board, places, depth+2), depth+2))
     print (stars(depth), "min_value = " + str(v))
     return v
 
