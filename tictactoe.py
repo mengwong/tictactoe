@@ -48,7 +48,7 @@ def player(board, depth=0):
             count['O'] += row.count('O')
             count['X'] += row.count('X')
     toreturn = 'X' if count['X'] <= count['O'] else 'O'
-    print("count O = " + str(count['O']) + "; count X = " + str(count['X']) + "; next move, player " + toreturn)
+    # print("count O = " + str(count['O']) + "; count X = " + str(count['X']) + "; next move, player " + toreturn)
     return toreturn
 
 def actions(board, depth=0):
@@ -109,6 +109,7 @@ def terminal(board, depth=0):
 
     TODO: we're terminal if winner()
     """
+    if (winner(board,depth) is not None): return True
     e_count = 0
     for row in board:
         if row.count(EMPTY) != 0:
@@ -116,7 +117,6 @@ def terminal(board, depth=0):
     if e_count != 0:
         print("are we terminal? no")
         return False
-    if (winner != None): return True
     print("are we terminal? yes")
     return True
 
@@ -197,7 +197,7 @@ def minimax_(board, depth=1, p=None):
 
             # non-leaf; run further minimax and collate the results
             print(stars(depth+2), f"minimax:      if {p} plays " + str(places) + " we recurse to the best submove for " + other_p(p))
-            subresult, outcome[places] = minimax_(nextmove, depth+2, otherp)
+            subresult, outcome[places] = memoize(nextmove, depth+2, otherp)
             print(stars(depth+2), f"minimax:      if {p} plays " + str(places) + " the best submove for " + other_p(p) + " is " + str(subresult))
             print(stars(depth+2), f"minimax:      hence we record utility of " + str(outcome[places]) + " for " + p + " playing " + str(places))
 
@@ -219,7 +219,15 @@ def minimax_(board, depth=1, p=None):
         else:
             print(stars(depth), f"recap: correct play for O is {minplay} with utility " + str(outcome[minplay]))
             return minplay, outcome[minplay]
-            
+
+mycache = {}
+
+# todo: add symmetries
+def memoize(board, depth=1, p=None):
+    mykey = str(board).replace('{','').replace('}','').replace('[','').replace(']','').replace("'",'').replace("'",'').replace(",","")
+    if mykey in mycache: return mycache[mykey]
+    mycache[mykey] = minimax_(board, depth, p)
+    return mycache[mykey]
 # 
 # 
 # test_board = [['X', 'O', EMPTY],
