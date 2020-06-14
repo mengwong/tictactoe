@@ -19,6 +19,10 @@ def show(name, board, depth=0):
         print(" "*(depth+1), end="")
         print (row)
 
+def other_p(p):
+    if p == 'X': return 'O'
+    else:        return 'X'
+        
 def initial_state():
     """
     Returns starting state of the board.
@@ -39,8 +43,8 @@ def player(board, depth):
         if row.count(None) < len(row):
             count['O'] += row.count('O')
             count['X'] += row.count('X')
-    toreturn = 'X' if count['X'] < count['O'] else 'O'
-    print("next move, player " + toreturn)
+    toreturn = 'X' if count['X'] <= count['O'] else 'O'
+    print("count O = " + str(count['O']) + "; count X = " + str(count['X']) + "; next move, player " + toreturn)
     return toreturn
 
 def actions(board, depth):
@@ -72,7 +76,7 @@ def result(board, action, depth):
     return temp_board
 
 
-def winner(board):
+def winner(board, depth):
     """
     Returns the winner of the game, if there is one.
     """
@@ -91,15 +95,16 @@ def winner(board):
         # check flipped diagonals
         elif (np.all(np.fliplr(np_board).diagonal() == p)):
             return p
-        else:
-            return None
+        
+    return None
 
 
 def terminal(board, depth):
     """
     Returns True if game is over, False otherwise.
+
+    TODO: we're terminal if winner()
     """
-#    show('Terminal', board)
     e_count = 0
     for row in board:
         if row.count(EMPTY) != 0:
@@ -115,53 +120,94 @@ def utility(board, depth):
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
-    show('Utility', board, 0)
-    check_board = winner(board)
+    # show('Utility', board, 0)
+    check_board = winner(board, depth)
     print(check_board)
     if check_board == 'X':
         print(stars(depth), 'We have a Winner! X wins.')
         return 1
     elif check_board == 'O':
-        print(stars(depth), 'We have a Winner! X wins.')
+        print(stars(depth), 'We have a Winner! O wins.')
         return -1
     else:
         print(stars(depth), 'A curious game, Professor Falken. The only winning move is not to play.')
         return 0
 
 
-def minimax(board, depth):
+def minimax(board, depth, p=None):
     """
     Returns the optimal action for the current player on the board.
+
+    We recurse until we bottom out at a terminal state.
+
+    The terminal state could be X wins, O wins, or neither wins. We associate a utility function with that state.
+
+    Assuming we are X and we win with 1:
+
+    Every future move can be evaluated to a range of outcomes in {-1:n, 0:n, 1:n}.
+
+    Order moves by:
+
+    If a winning move is available, play it; the utility is nonzero.
+    {-1:0, 0:0, 1: >0}
+
+    If only a terminal draw is available, play that.
+    Exclude all moves which lead to the other player winning.
+    Play any move that prevents the other player from winning.
+    {-1:0, 0: >0}
+
+    Otherwise, be a good sport and lose
+    {-1:>0}
+
+    Let's return the best move and the utility as a tuple
     """
-    show("minimax: what is the minimax value of this board?", board, depth)
+    p = p or player(board,depth)
+    show("minimax: what should " + p + " play, given this board?", board, depth)
     if (terminal(board,depth)):
         print(stars(depth), "minimax: board is terminal; returning none.")
         return None
     else:
-        if player(board,depth) == 'X':
-            print(stars(depth), "minimax: player X goes next, so returning max_value.")
-            return max_value(board, depth+1)
-        elif player(board,depth) == 'O':
-            print(stars(depth), "minimax: player O goes next, so returning min_value.")
-            return min_value(board, depth+1)
+        possibilities = actions(board, depth)
+        outcome = {}
+        for places in possibilities:
+            print(stars(depth+1), f"minimax: what if {p} plays " + str(places) + "?")
+            nextmove = result(board, places, depth+1)
+            if winner(nextmove,depth+2):
+                outcome[places] = utility(nextmove, depth+1)
+                print(stars(depth+2), f"minimax:     if {p} plays " + str(places) + f" then somebody wins with utility {outcome[places]}")
+                if p == 'X' and outcome[places] == 1:
+                    print(stars(depth), "X wins with " + str(places))
+                    return places, outcome[places]
+                elif p == 'O' and outcome[places] == -1:
+                    print(stars(depth), "O wins with " + str(places))
+                    return places, outcome[places]
+            if terminal(nextmove,depth+2):
+                print(stars(depth+2), f"minimax:      if {p} plays " + str(places) + " then it's a draw. fine by us.")
+                return places, 0
 
+            # non-leaf; run further minimax and collate the results
+            print(stars(depth+2), f"minimax:      if {p} plays " + str(places) + " we recurse to the best submove for " + other_p(p))
+            subresult, outcome[places] = minimax(nextmove, depth+2)
+            print(stars(depth+2), f"minimax:      if {p} plays " + str(places) + " the best submove for " + other_p(p) + " is " + str(subresult))
+            print(stars(depth+2), f"minimax:      hence we record utility of " + str(outcome[places]) + " for " + p + " playing " + str(places))
 
-def max_value(board, depth):
-    show ("max_value: what is the max value of this board?", board, depth)
-    if (terminal(board, depth)):
-        ub = utility(board, depth)
-        print (stars(depth), "max_value: board is terminal. returning utility of the board, which is " + str(ub))
-        return ub
-    v = float("-inf")
-    possibilities = actions(board, depth)
-    print("max_value: considering " + str(len(possibilities)) + " possibilities.")
-    p = player(board,depth)
-    for places in possibilities:
-        print(stars(depth), f"max_value: what if {p} plays " + str(places) + "?")
-        v = max(v, min_value(result(board, places, depth+1), depth+1))
-        print(stars(depth), f"max_value:      if {p} plays " + str(places) + ", the max_value is " + str(v))
-    return v
+        print(stars(depth), p + " is considering options...")
+        print(outcome)
+        
+        # choose the optimal action
+        for places in outcome:
+            print(f"recap: {places} has utilities {outcome[places]}")
+        maxplay = max(outcome, key=outcome.get)
+        minplay = min(outcome, key=outcome.get)
+        if p == 'X':
+            print(stars(depth), f"recap: correct play for X is {maxplay} with utility " + str(outcome[maxplay]))
+            return maxplay, outcome[maxplay]
+        else:
+            print(stars(depth), f"recap: correct play for O is {minplay} with utility " + str(outcome[minplay]))
+            return minplay, outcome[minplay]
+            
 
+        
 def min_value(board, depth):
     show ("min_value: what is the min value of this board?", board, depth)
     if (terminal(board,depth)):
@@ -178,8 +224,8 @@ def min_value(board, depth):
         print(stars(depth), f"min_value:      if {p} plays " + str(places) + ", the min_value is " + str(v))
     return v
 
-test_board = [['X', 'O', 'O'],
-              ['O', 'O', EMPTY],
+test_board = [['X', 'O', EMPTY],
+              ['O', EMPTY, EMPTY],
               ['X', 'X', EMPTY]]
 print(minimax(test_board, 2))
 
