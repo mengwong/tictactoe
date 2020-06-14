@@ -2,6 +2,10 @@
 Tic Tac Toe Player
 """
 
+# usage:              python tictactoe.py > log.org
+# to view the log,    emacs log.org
+# and press TAB judiciously
+
 import math
 import copy
 import numpy as np
@@ -207,22 +211,6 @@ def minimax(board, depth, p=None):
             return minplay, outcome[minplay]
             
 
-        
-def min_value(board, depth):
-    show ("min_value: what is the min value of this board?", board, depth)
-    if (terminal(board,depth)):
-        ub = utility(board, depth)
-        print (stars(depth), "min_value: board is terminal. returning utility of the board, which is " + str(ub))
-        return ub
-    v = float("inf")
-    possibilities = actions(board, depth)
-    print("min_value: considering " + str(len(possibilities)) + " possibilities.")
-    p = player(board,depth)
-    for places in possibilities:
-        print(stars(depth), f"min_value: what if {p} plays " + str(places) + "?")
-        v = min(v, max_value(result(board, places, depth+1), depth+1))
-        print(stars(depth), f"min_value:      if {p} plays " + str(places) + ", the min_value is " + str(v))
-    return v
 
 test_board = [['X', 'O', EMPTY],
               ['O', EMPTY, EMPTY],
