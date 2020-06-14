@@ -36,7 +36,7 @@ def initial_state():
             [EMPTY, EMPTY, EMPTY]]
 
 
-def player(board, depth):
+def player(board, depth=0):
     """
     Returns player who has the next turn on a board.
     """
@@ -51,7 +51,7 @@ def player(board, depth):
     print("count O = " + str(count['O']) + "; count X = " + str(count['X']) + "; next move, player " + toreturn)
     return toreturn
 
-def actions(board, depth):
+def actions(board, depth=0):
     """
     Returns set of all possible actions (i, j) available on the board.
     """
@@ -64,13 +64,13 @@ def actions(board, depth):
     return result
 
 
-def result(board, action, depth):
+def result(board, action, depth=0):
     """
     Returns the board that results from making move (i, j) on the board.
     """
     temp_board = copy.deepcopy(board)
     curr_player = player(board,depth)
-    print("the current player is " + curr_player)
+    print("result: the current player is " + curr_player + "; asked to consider " + str(action))
     i, j = action
     if temp_board[i][j] != EMPTY:
         raise Exception ('Not a valid move')
@@ -80,7 +80,7 @@ def result(board, action, depth):
     return temp_board
 
 
-def winner(board, depth):
+def winner(board, depth=0):
     """
     Returns the winner of the game, if there is one.
     """
@@ -103,7 +103,7 @@ def winner(board, depth):
     return None
 
 
-def terminal(board, depth):
+def terminal(board, depth=0):
     """
     Returns True if game is over, False otherwise.
 
@@ -116,11 +116,12 @@ def terminal(board, depth):
     if e_count != 0:
         print("are we terminal? no")
         return False
+    if (winner != None): return True
     print("are we terminal? yes")
     return True
 
 
-def utility(board, depth):
+def utility(board, depth=0):
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
@@ -138,7 +139,11 @@ def utility(board, depth):
         return 0
 
 
-def minimax(board, depth, p=None):
+def minimax(board, depth=1, p=None):
+    subresult, utility = minimax_(board, depth, p)
+    return subresult
+
+def minimax_(board, depth=1, p=None):
     """
     Returns the optimal action for the current player on the board.
 
@@ -166,6 +171,7 @@ def minimax(board, depth, p=None):
     Let's return the best move and the utility as a tuple
     """
     p = p or player(board,depth)
+    otherp = other_p(p)
     show("minimax: what should " + p + " play, given this board?", board, depth)
     if (terminal(board,depth)):
         print(stars(depth), "minimax: board is terminal; returning none.")
@@ -191,16 +197,20 @@ def minimax(board, depth, p=None):
 
             # non-leaf; run further minimax and collate the results
             print(stars(depth+2), f"minimax:      if {p} plays " + str(places) + " we recurse to the best submove for " + other_p(p))
-            subresult, outcome[places] = minimax(nextmove, depth+2)
+            subresult, outcome[places] = minimax_(nextmove, depth+2, otherp)
             print(stars(depth+2), f"minimax:      if {p} plays " + str(places) + " the best submove for " + other_p(p) + " is " + str(subresult))
             print(stars(depth+2), f"minimax:      hence we record utility of " + str(outcome[places]) + " for " + p + " playing " + str(places))
+
+#            if (outcome[places] == 0):
+#                print(stars(depth+2), f"minimax:      optimizer: utility 0 found, short-circuiting; a draw is good enough for us")
+#                break
 
         print(stars(depth), p + " is considering options...")
         print(outcome)
         
         # choose the optimal action
         for places in outcome:
-            print(f"recap: {places} has utilities {outcome[places]}")
+            print(f"recap: {places} has utility {outcome[places]}")
         maxplay = max(outcome, key=outcome.get)
         minplay = min(outcome, key=outcome.get)
         if p == 'X':
@@ -210,12 +220,16 @@ def minimax(board, depth, p=None):
             print(stars(depth), f"recap: correct play for O is {minplay} with utility " + str(outcome[minplay]))
             return minplay, outcome[minplay]
             
-
-
-test_board = [['X', 'O', EMPTY],
-              ['O', EMPTY, EMPTY],
-              ['X', 'X', EMPTY]]
-print(minimax(test_board, 2))
-
+# 
+# 
+# test_board = [['X', 'O', EMPTY],
+#               ['O', EMPTY, EMPTY],
+#               ['X', 'X', EMPTY]]
+# test_board2 = [['X', EMPTY, EMPTY],
+#               [EMPTY, EMPTY, EMPTY],
+#               [EMPTY, EMPTY, EMPTY]]
+# print(stars(1), "we are starting a run of tictactoe.py")
+# print(minimax(test_board2, 2))
+# 
 
 # get the min or max value from the respective functions, get the associated move and pass it on
